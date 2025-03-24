@@ -4,44 +4,49 @@ session_start();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h2>Welcome to Student Management System</h2>
 
-    <!-- Registration Form -->
-    <h3>Register</h3>
-    <form action="register.php" method="POST">
-        <input type="text" name="name" placeholder="Enter Name" required>
-        <input type="email" name="email" placeholder="Enter Email" required>
-        <input type="password" name="password" placeholder="Enter Password" required>
-        <button type="submit">Register</button>
-    </form>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-center">Student Management System</h2>
 
-    <!-- Login Form -->
-    <h3>Login</h3>
-    <form action="login.php" method="POST">
-        <input type="email" name="email" placeholder="Enter Email" required>
-        <input type="password" name="password" placeholder="Enter Password" required>
-        <button type="submit">Login</button>
-    </form>
+        <?php if (!isset($_SESSION['user'])): ?>
+            <!-- Registration Form -->
+            <div class="card p-4 mt-3">
+                <h3>Register</h3>
+                <form action="register.php" method="POST">
+                    <input type="text" class="form-control mb-2" name="name" placeholder="Enter Name" required>
+                    <input type="email" class="form-control mb-2" name="email" placeholder="Enter Email" required>
+                    <input type="password" class="form-control mb-2" name="password" placeholder="Enter Password" required>
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                </form>
+            </div>
 
-    <?php if (isset($_SESSION['user'])): ?>
-        <h3>Welcome, <?php echo $_SESSION['user']; ?>!</h3>
+            <!-- Login Form -->
+            <div class="card p-4 mt-3">
+                <h3>Login</h3>
+                <form action="login.php" method="POST">
+                    <input type="email" class="form-control mb-2" name="email" placeholder="Enter Email" required>
+                    <input type="password" class="form-control mb-2" name="password" placeholder="Enter Password" required>
+                    <button type="submit" class="btn btn-success w-100">Login</button>
+                </form>
+            </div>
+        <?php else: ?>
+            <h3 class="text-center mt-4">Welcome, <?php echo $_SESSION['user']; ?>!</h3>
+            <a href="enroll.php" class="btn btn-info w-100 mt-3">Go to Enrollment</a>
+            <form action="logout.php" method="POST" class="mt-2">
+                <button type="submit" class="btn btn-danger w-100">Logout</button>
+            </form>
+        <?php endif; ?>
+    </div>
 
-        <!-- Course Enrollment -->
-        <h3>Enroll in a Course</h3>
-        <form action="enroll.php" method="POST">
-            <input type="text" name="course" placeholder="Enter Course Name" required>
-            <button type="submit">Enroll</button>
-        </form>
-
-        <form action="logout.php" method="POST">
-            <button type="submit">Logout</button>
-        </form>
-    <?php endif; ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

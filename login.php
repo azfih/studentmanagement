@@ -15,12 +15,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $user = $result->fetch_assoc();
         if (password_verify($password, $user['password'])) {
             $_SESSION['user'] = $user['name'];
-            echo "Login successful!";
+            echo "<script>alert('Login successful! Redirecting to enrollment.'); window.location.href='enroll.php';</script>";
         } else {
-            echo "Invalid credentials!";
+            echo "<script>alert('Invalid credentials!');</script>";
         }
     } else {
-        echo "User not found!";
+        echo "<script>alert('User not found!');</script>";
     }
 
     $stmt->close();
