@@ -7,12 +7,38 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $course = $_POST['course'];
-    $student = $_SESSION['user'];
+$user = $_SESSION['user'];
 
-    $stmt = $conn->prepare("INSERT INTO enrollments (student, course) VALUES (?, ?)");
-    $stmt->bind_param("ss", $student, $course);
+// Fetch user_id based on session user (email or name)
+$stmt = $conn->prepare("SELECT id FROM users WHERE email = ? OR name = ?");
+$stmt->bind_param("ss", $user, $user);
+$stmt->execute();
+$stmt->bind_result($user_id);
+$stmt->fetch();
+$stmt->close();
+
+if (!$user_id) {
+    die("User not found!");
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $course_name = $_POST['course'];
+
+    // Fetch course_id based on course name
+    $stmt = $conn->prepare("SELECT id FROM courses WHERE name = ?");
+    $stmt->bind_param("s", $course_name);
+    $stmt->execute();
+    $stmt->bind_result($course_id);
+    $stmt->fetch();
+    $stmt->close();
+
+    if (!$course_id) {
+        die("<script>alert('Course not found!'); window.location.href='enroll.php';</script>");
+    }
+
+    // Insert enrollment record
+    $stmt = $conn->prepare("INSERT INTO enrollments (user_id, course_id) VALUES (?, ?)");
+    $stmt->bind_param("ii", $user_id, $course_id);
 
     if ($stmt->execute()) {
         echo "<script>alert('Enrollment successful!'); window.location.href='enroll.php';</script>";
@@ -23,7 +49,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->close();
 }
 
-$result = $conn->query("SELECT course FROM enrollments WHERE student='{$_SESSION['user']}'");
+// Fetch enrolled courses for the user
+$result = $conn->query("
+    SELECT courses.name FROM enrollments
+    JOIN courses ON enrollments.course_id = courses.id
+    WHERE enrollments.user_id = $user_id
+");
 ?>
 
 <!DOCTYPE html>
@@ -38,7 +69,7 @@ $result = $conn->query("SELECT course FROM enrollments WHERE student='{$_SESSION
 
 <body class="bg-light">
     <div class="container mt-5">
-        <h2>Welcome, <?php echo $_SESSION['user']; ?></h2>
+        <h2>Welcome, <?php echo htmlspecialchars($_SESSION['user']); ?></h2>
 
         <div class="card p-4 mt-3">
             <h3>Enroll in a Course</h3>
@@ -51,7 +82,7 @@ $result = $conn->query("SELECT course FROM enrollments WHERE student='{$_SESSION
         <h3 class="mt-4">Your Enrolled Courses</h3>
         <ul class="list-group">
             <?php while ($row = $result->fetch_assoc()): ?>
-                <li class="list-group-item"><?php echo $row['course']; ?></li>
+                <li class="list-group-item"><?php echo htmlspecialchars($row['name']); ?></li>
             <?php endwhile; ?>
         </ul>
 
