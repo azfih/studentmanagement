@@ -21,20 +21,9 @@ if (!$user_id) {
     die("User not found!");
 }
 
+// Handle enrollment
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $course_name = $_POST['course'];
-
-    // Fetch course_id based on course name
-    $stmt = $conn->prepare("SELECT id FROM courses WHERE name = ?");
-    $stmt->bind_param("s", $course_name);
-    $stmt->execute();
-    $stmt->bind_result($course_id);
-    $stmt->fetch();
-    $stmt->close();
-
-    if (!$course_id) {
-        die("<script>alert('Course not found!'); window.location.href='enroll.php';</script>");
-    }
+    $course_id = $_POST['course']; // Now receiving course_id instead of course name
 
     // Insert enrollment record
     $stmt = $conn->prepare("INSERT INTO enrollments (user_id, course_id) VALUES (?, ?)");
@@ -49,8 +38,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->close();
 }
 
+// Fetch available courses (those the user is not already enrolled in)
+$availableCourses = $conn->query("
+    SELECT id, name FROM courses 
+    WHERE id NOT IN (SELECT course_id FROM enrollments WHERE user_id = $user_id)
+");
+
 // Fetch enrolled courses for the user
-$result = $conn->query("
+$enrolledCourses = $conn->query("
     SELECT courses.name FROM enrollments
     JOIN courses ON enrollments.course_id = courses.id
     WHERE enrollments.user_id = $user_id
@@ -74,14 +69,19 @@ $result = $conn->query("
         <div class="card p-4 mt-3">
             <h3>Enroll in a Course</h3>
             <form action="" method="POST">
-                <input type="text" class="form-control mb-2" name="course" placeholder="Enter Course Name" required>
+                <select class="form-control mb-2" name="course" required>
+                    <option value="">Select a Course</option>
+                    <?php while ($row = $availableCourses->fetch_assoc()): ?>
+                        <option value="<?php echo $row['id']; ?>"><?php echo htmlspecialchars($row['name']); ?></option>
+                    <?php endwhile; ?>
+                </select>
                 <button type="submit" class="btn btn-primary w-100">Enroll</button>
             </form>
         </div>
 
         <h3 class="mt-4">Your Enrolled Courses</h3>
         <ul class="list-group">
-            <?php while ($row = $result->fetch_assoc()): ?>
+            <?php while ($row = $enrolledCourses->fetch_assoc()): ?>
                 <li class="list-group-item"><?php echo htmlspecialchars($row['name']); ?></li>
             <?php endwhile; ?>
         </ul>
